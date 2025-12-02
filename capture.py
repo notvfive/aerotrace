@@ -82,6 +82,9 @@ class Capture:
         all_networks = []
 
         for section in network_sections:
+            section = section.strip()
+            if not section: continue
+            
             td = {}
 
             td["bssid"] = re.search(r'^BSS\s([0-9a-f:]{17})', section, re.MULTILINE)

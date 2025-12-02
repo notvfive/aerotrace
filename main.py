@@ -3,6 +3,9 @@ import sys, os, asyncio
 from dataclasses import dataclass
 from capture import Capture
 from fingerprint import Fingerprint
+from database import DatabaseConnector
+
+db = DatabaseConnector("database.db").connect()
 
 @dataclass
 class Mode:
@@ -40,6 +43,12 @@ BANNER = r"""
 def clear():
     os.system("clear")
 
+def is_mode_enabled(key: str) -> bool:
+    for mode in MODES:
+        if mode.key == key:
+            return mode.selected
+    return False
+
 def print_banner():
     print(colored(BANNER, "blue"))
 
@@ -71,7 +80,7 @@ def handle_selection(choice: int, modes: list[Mode]):
     print(colored("Invalid option.", "red"))
     return "continue"
 
-def show():
+async def show():
     while True:
         clear()
         print_menu(MODES)
@@ -79,17 +88,71 @@ def show():
         try:
             choice = int(input(colored("\nSelect an option: ", "white")))
             if handle_selection(choice, MODES) == "start":
-
+                clear()
                 while True:
-                    net_results = asyncio.run(Capture.scan())
-                    for _, network in enumerate(net_results, 1):
-                        fp = Fingerprint.Generate(network.items())
+                    try:
+                        net_results = await Capture.scan()
 
-                break
+                        for network in net_results:
+                            bssid = network.get("bssid")
+                            ssid = network.get("ssid") or "<hidden>"
+                            encryption = network.get("encryption")
+                            vendor = network.get("vendor")
+                            model = network.get("model")
+                            modelnumber = network.get("modelnumber")
+                            serialnumber = network.get("serialnumber")
+                            devicename = network.get("devicename")
+                            primarydevicetype = network.get("primarydevicetype")
+                            uuid = network.get("uuid")
 
+                            if not bssid:
+                                continue
+
+                            fp = ""
+                            if is_mode_enabled("autofingerprint"):
+                                try:
+                                    fp = await Fingerprint.Generate(network)
+                                except Exception as e:
+                                    print(colored(f"[!] Fingerprint error for {bssid}: {e}", "red"))
+
+                            if is_mode_enabled("autosave"):
+                                try:
+                                    exists = await db.is_bssid_already_saved(bssid)
+                                    if not exists:
+                                        print(colored(f"[*] Saving {ssid} ({bssid}) to database...", "blue"))
+
+                                        await db.execute_query(
+                                            """
+                                            INSERT INTO accesspoints 
+                                            (bssid, ssid, encryption, vendor, model, modelnumber, serialnumber, 
+                                            devicename, primarydevicetype, uuid, fingerprint)
+                                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                            """,
+                                            (
+                                                bssid,
+                                                ssid,
+                                                encryption,
+                                                vendor,
+                                                model,
+                                                modelnumber,
+                                                serialnumber,
+                                                devicename,
+                                                primarydevicetype,
+                                                uuid,
+                                                fp
+                                            )
+                                        )
+                                except Exception as e:
+                                    print(colored(f"[!] DB error: {e}", "red"))
+
+                            print(f"{bssid} - {ssid} - {fp}")
+
+                    except Exception as e:
+                        print(colored(f"[!] Scan loop error: {e}", "red"))
+
+                    await asyncio.sleep(1)
         except ValueError:
             print(colored("Please enter a number.", "red"))
-
         except Exception as e:
             print(colored(f"Unexpected error:\n{e}", "red"))
             sys.exit(1)
@@ -103,4 +166,4 @@ if __name__ == "__main__":
         print(colored("AeroTrace must be ran with sudo.", "red"))
         sys.exit(1)
 
-    show()
+    asyncio.run(show())
