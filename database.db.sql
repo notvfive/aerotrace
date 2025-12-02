@@ -5,12 +5,18 @@ CREATE TABLE IF NOT EXISTS "accesspoints" (
 	"ssid"	TEXT,
 	"encryption"	TEXT,
 	"vendor"	TEXT,
-	"avg_strength"	INTEGER,
+	"model"	TEXT,
+	"modelnumber"	TEXT,
+	"serialnumber"	INTEGER,
+	"devicename"	TEXT,
+	"primarydevicetype"	TEXT,
+	"uuid"	TEXT,
 	"fingerprint"	TEXT,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 CREATE TABLE IF NOT EXISTS "stations" (
 	"id"	INTEGER,
+	"essid"	TEXT,
 	"bssid"	TEXT,
 	"vendor"	TEXT,
 	"fingerprint"	TEXT,
