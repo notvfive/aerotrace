@@ -31,16 +31,15 @@ BANNER = r"""
        // || \
     __//__||__\__
    '--------------'
+
+   https://github.com/notvfive/aerotrace
 """
 
 def clear():
-    if os.name == "nt":
-        os.system("cls")
-    else:
-        os.system("clear")
+    os.system("clear")
 
 def print_banner():
-    print(BANNER)
+    print(colored(BANNER, "blue"))
 
 def print_menu(modes: list[Mode]):
     print_banner()
@@ -88,4 +87,12 @@ def show():
             sys.exit(1)
 
 if __name__ == "__main__":
+    if os.name == "nt":
+        print(colored("AeroTrace is for linux use only.", "red"))
+        sys.exit(1)
+
+    if os.getuid() != 0:
+        print(colored("AeroTrace must be ran with sudo.", "red"))
+        sys.exit(1)
+
     show()
