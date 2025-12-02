@@ -7,7 +7,7 @@ if not db:
 
 class Fingerprint:
     @staticmethod
-    def Generate(data=None):
+    async def Generate(data=None):
         if not data:
             print("[*] Failed to create a fingerprint. (Empty data given)")
             return ""
@@ -21,12 +21,13 @@ class Fingerprint:
 
         return hash.hexdigest()
 
-    def DoesFingerprintExist(fingerprint=None):
+    @staticmethod
+    async def DoesFingerprintExist(fingerprint=None):
         if not fingerprint:
             print("[*] Failed to supply a fingerprint.")
             return None
         
-        result = db.execute_query(
+        result = await db.execute_query(
             "SELECT fingerprint FROM accesspoints UNION SELECT fingerprint FROM stations;"
         )
 

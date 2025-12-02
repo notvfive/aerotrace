@@ -1,6 +1,8 @@
 from termcolor import colored
-import sys, os
+import sys, os, asyncio
 from dataclasses import dataclass
+from capture import Capture
+from fingerprint import Fingerprint
 
 @dataclass
 class Mode:
@@ -77,6 +79,12 @@ def show():
         try:
             choice = int(input(colored("\nSelect an option: ", "white")))
             if handle_selection(choice, MODES) == "start":
+
+                while True:
+                    net_results = asyncio.run(Capture.scan())
+                    for _, network in enumerate(net_results, 1):
+                        fp = Fingerprint.Generate(network.items())
+
                 break
 
         except ValueError:

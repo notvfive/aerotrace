@@ -1,56 +1,54 @@
 import subprocess, re
-from time import sleep
 from termcolor import colored
-
-from fingerprint import Fingerprint
+import asyncio
 
 class Capture:
     interface = "wlan0"
 
     @staticmethod
-    def bring_down():
+    async def bring_down():
         subprocess.run(
             f"sudo ip link set {Capture.interface} down",
             shell=True,
             check=False
         )
-        sleep(0.4)
+        await asyncio.sleep(0.4)
 
     @staticmethod
-    def bring_up():
+    async def bring_up():
         subprocess.run(
             f"sudo ip link set {Capture.interface} up",
             shell=True,
             check=False
         )
-        sleep(0.4)
+        await asyncio.sleep(0.4)
 
     @staticmethod
-    def set_mode_monitor():
+    async def set_mode_monitor():
         print(colored("[*] Switching to monitor mode...", "yellow"))
-        Capture.bring_down()
+        await Capture.bring_down()
         subprocess.run(
             f"sudo iw dev {Capture.interface} set type monitor",
             shell=True,
             check=True
         )
-        Capture.bring_up()
-        sleep(0.5)
+        await Capture.bring_up()
+        await asyncio.sleep(0.5)
 
     @staticmethod
-    def set_mode_managed():
+    async def set_mode_managed():
         print(colored("[*] Switching to managed mode...", "yellow"))
-        Capture.bring_down()
+        await Capture.bring_down()
         subprocess.run(
             f"sudo iw dev {Capture.interface} set type managed",
             shell=True,
             check=True
         )
-        Capture.bring_up()
-        sleep(0.5)
+        await Capture.bring_up()
+        await asyncio.sleep(0.5)
 
     @staticmethod
-    def get_mode():
+    async def get_mode():
         try:
             output = subprocess.check_output(
                 f"iw dev {Capture.interface} info | grep type",
@@ -62,11 +60,11 @@ class Capture:
             return None
 
     @staticmethod
-    def scan():
+    async def scan():
         print(colored("[*] Ensuring card is in managed mode...", "yellow"))
         
-        if Capture.get_mode() != "managed":
-            Capture.set_mode_monitor()
+        if await Capture.get_mode() != "managed":
+            await Capture.set_mode_monitor()
         else:
             print(colored("[+] Already in managed mode!", "green"))
         
@@ -121,9 +119,6 @@ class Capture:
             all_networks.append(td)
 
         return all_networks
-
-
-
 
 
 

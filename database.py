@@ -24,7 +24,7 @@ class DatabaseConnector:
             print(f"[-] Failed to connect to database: {e}")
             return sys.exit(1) or False
 
-    def execute_query(self, query, params=None):
+    async def execute_query(self, query, params=None):
         if self.cur:
             try:
                 if params:
@@ -40,18 +40,18 @@ class DatabaseConnector:
             print("[-] No database connection.")
             return None
         
-    def is_bssid_already_saved(self, bssid=None):
+    async def is_bssid_already_saved(self, bssid=None):
         if not bssid:
             print("[-] No BSSID provided to check.")
             return False
         
-        result = self.execute_query("SELECT 1 FROM accesspoints WHERE bssid = ? UNION SELECT 1 FROM stations WHERE bssid = ? LIMIT 1", (bssid, bssid))
+        result = await self.execute_query("SELECT 1 FROM accesspoints WHERE bssid = ? UNION SELECT 1 FROM stations WHERE bssid = ? LIMIT 1", (bssid, bssid))
 
         if result:
             return True
         return False
 
-    def close_connection(self):
+    async def close_connection(self):
         if self.db:
             self.db.close()
             print("[+] Database connection closed.")
