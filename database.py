@@ -39,6 +39,17 @@ class DatabaseConnector:
         else:
             print("[-] No database connection.")
             return None
+        
+    def is_bssid_already_saved(self, bssid=None):
+        if not bssid:
+            print("[-] No BSSID provided to check.")
+            return False
+        
+        result = self.execute_query("SELECT 1 FROM accesspoints WHERE bssid = ? UNION SELECT 1 FROM stations WHERE bssid = ? LIMIT 1", (bssid, bssid))
+
+        if result:
+            return True
+        return False
 
     def close_connection(self):
         if self.db:
@@ -46,4 +57,5 @@ class DatabaseConnector:
             print("[+] Database connection closed.")
         else:
             print("[-] No database connection to close.")
+
 
