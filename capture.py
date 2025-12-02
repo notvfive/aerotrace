@@ -2,6 +2,8 @@ import subprocess, re
 from time import sleep
 from termcolor import colored
 
+from fingerprint import Fingerprint
+
 class Capture:
     interface = "wlan0"
 
@@ -126,4 +128,8 @@ for i, net in enumerate(result, 1):
     print(f"--- Network {i} ---")
     for k,v in net.items():
         print(f"{k}: {v}")
+
+    fp = Fingerprint.Generate(net.items())
+    print(fp)
+    print(Fingerprint.DoesFingerprintExist(fp))
     print()
