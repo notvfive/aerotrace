@@ -2,8 +2,6 @@ import subprocess, re
 from termcolor import colored
 import asyncio
 
-interface_usable = False
-
 class Capture:
     interface = "wlan0"
 
