@@ -111,7 +111,18 @@ async def show():
                             fp = ""
                             if is_mode_enabled("autofingerprint"):
                                 try:
-                                    fp = await Fingerprint.Generate(network)
+                                    fp = await Fingerprint.Generate({
+                                        bssid,
+                                        ssid,
+                                        encryption, 
+                                        vendor,
+                                        model,
+                                        modelnumber,
+                                        serialnumber,
+                                        devicename,
+                                        primarydevicetype,
+                                        uuid
+                                    })
                                 except Exception as e:
                                     print(colored(f"[!] Fingerprint error for {bssid}: {e}", "red"))
 
