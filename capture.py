@@ -2,6 +2,8 @@ import subprocess, re
 from termcolor import colored
 import asyncio
 
+interface_usable = False
+
 class Capture:
     interface = "wlan0"
 
@@ -61,14 +63,14 @@ class Capture:
 
     @staticmethod
     async def scan():
-        print(colored("[*] Ensuring card is in managed mode...", "yellow"))
         
         if await Capture.get_mode() != "managed":
+            print(colored("[*] Ensuring card is in managed mode...", "yellow"))
             await Capture.set_mode_monitor()
-        else:
-            print(colored("[+] Already in managed mode!", "green"))
+        # else:
+        #     print(colored("[+] Already in managed mode!", "green"))
         
-        print(colored(f"[*] Scanning...", "blue"))
+        # print(colored(f"[*] Scanning...", "blue"))
 
         result = subprocess.check_output(
             f"iw dev {Capture.interface} scan",

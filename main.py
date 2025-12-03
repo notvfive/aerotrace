@@ -142,10 +142,10 @@ async def show():
                                                 fp
                                             )
                                         )
+                                    else:
+                                        print(colored(f"[-] {bssid} ({ssid}) is already saved.", "red"))
                                 except Exception as e:
                                     print(colored(f"[!] DB error: {e}", "red"))
-
-                            print(f"{bssid} - {ssid} - {fp}")
 
                     except Exception as e:
                         print(colored(f"[!] Scan loop error: {e}", "red"))
