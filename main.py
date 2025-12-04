@@ -120,8 +120,9 @@ async def show():
 
                             if is_mode_enabled("spoofdetect2") and "hidden" not in ssid.lower():
                                 _db_bssid = await db.get_bssid_from_ssid(ssid)
-                                if bssid not in _db_bssid:
-                                    print(colored(f"[*] Possible spoofing detected by method 2: {ssid} ({bssid} | {_db_bssid or 'BSSID N/A'})", "yellow"))
+                                if len(_db_bssid) > 1 or _db_bssid != None or _db_bssid != "":
+                                    if bssid not in _db_bssid:
+                                        print(colored(f"[*] Possible spoofing detected by method 2: {ssid} ({bssid} | {_db_bssid or 'BSSID N/A'})", "yellow"))
 
                             fp = ""
                             if is_mode_enabled("autofingerprint"):
