@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS "accesspoints" (
 );
 CREATE TABLE IF NOT EXISTS "stations" (
 	"id"	INTEGER,
-	"essid"	TEXT,
+	"ssid"	TEXT,
 	"bssid"	TEXT,
 	"vendor"	TEXT,
 	"fingerprint"	TEXT,

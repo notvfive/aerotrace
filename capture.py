@@ -7,45 +7,55 @@ class Capture:
 
     @staticmethod
     async def bring_down():
+        print(colored(f"[*] Bringing down the {Capture.interface} interface...", "yellow"))
         subprocess.run(
             f"sudo ip link set {Capture.interface} down",
             shell=True,
             check=False
         )
-        await asyncio.sleep(0.4)
+        await asyncio.sleep(0.5)
 
     @staticmethod
     async def bring_up():
+        print(colored(f"[*] Bringing up the {Capture.interface} interface...", "yellow"))
         subprocess.run(
             f"sudo ip link set {Capture.interface} up",
             shell=True,
             check=False
         )
-        await asyncio.sleep(0.4)
+        await asyncio.sleep(0.5)
 
     @staticmethod
     async def set_mode_monitor():
         print(colored("[*] Switching to monitor mode...", "yellow"))
         await Capture.bring_down()
-        subprocess.run(
-            f"sudo iw dev {Capture.interface} set type monitor",
-            shell=True,
-            check=True
-        )
+        try:
+            subprocess.run(
+                f"sudo iw dev {Capture.interface} set type monitor",
+                shell=True,
+                check=True
+            )
+        except subprocess.CalledProcessError as e:
+            print(colored(f"[-] Error switching to monitor mode: {e}", "red"))
+            return
         await Capture.bring_up()
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1)
 
     @staticmethod
     async def set_mode_managed():
         print(colored("[*] Switching to managed mode...", "yellow"))
         await Capture.bring_down()
-        subprocess.run(
-            f"sudo iw dev {Capture.interface} set type managed",
-            shell=True,
-            check=True
-        )
+        try:
+            subprocess.run(
+                f"sudo iw dev {Capture.interface} set type managed",
+                shell=True,
+                check=True
+            )
+        except subprocess.CalledProcessError as e:
+            print(colored(f"[-] Error switching to managed mode: {e}", "red"))
+            return
         await Capture.bring_up()
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1)
 
     @staticmethod
     async def get_mode():
@@ -61,20 +71,19 @@ class Capture:
 
     @staticmethod
     async def scan():
-        
         if await Capture.get_mode() != "managed":
             print(colored("[*] Ensuring card is in managed mode...", "yellow"))
             await Capture.set_mode_monitor()
-        # Commented to stop spamming the output!
-        # else:
-        #     print(colored("[+] Already in managed mode!", "green"))
-        
-        # print(colored(f"[*] Scanning...", "blue"))
 
-        result = subprocess.check_output(
-            f"iw dev {Capture.interface} scan",
-            shell=True
-        ).decode().strip()
+        try:
+            print(colored(f"[*] Scanning on {Capture.interface}...", "blue"))
+            result = subprocess.check_output(
+                f"iw dev {Capture.interface} scan",
+                shell=True
+            ).decode().strip()
+        except subprocess.CalledProcessError as e:
+            print(colored(f"[-] Scan failed: {e}", "red"))
+            return []
 
         network_sections = re.split(
             r'(?=^BSS\s[0-9a-f:]{17}\(on wlan0\))', result, flags=re.MULTILINE
@@ -85,7 +94,7 @@ class Capture:
         for section in network_sections:
             section = section.strip()
             if not section: continue
-            
+
             td = {}
 
             td["bssid"] = re.search(r'^BSS\s([0-9a-f:]{17})', section, re.MULTILINE)
@@ -123,6 +132,3 @@ class Capture:
             all_networks.append(td)
 
         return all_networks
-
-
-

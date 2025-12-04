@@ -92,5 +92,18 @@ class DatabaseConnector:
             print("[+] Database connection closed.")
         else:
             print("[-] No database connection to close.")
-
-
+    
+    def check_column_existence(self, table_name, column_name):
+        if not self.cur:
+            print("[-] No database connection.")
+            return False
+        try:
+            self.cur.execute(f"PRAGMA table_info({table_name})")
+            columns = self.cur.fetchall()
+            for col in columns:
+                if col[1] == column_name:
+                    return True
+            return False
+        except sqlite3.Error as e:
+            print(f"[-] Error checking table schema: {e}")
+            return False

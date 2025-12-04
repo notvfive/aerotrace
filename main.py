@@ -25,11 +25,11 @@ BANNER = r"""
         / \  `.  __..-,O
        :   \ --''_..-'.'
        |    . .-' `. '.
-       :     .     .`.'
+       :     .     .`.' 
         \     `.  /  ..
-         \      `.   ' .
-          `,       `.   \
-         ,|,`.        `-.\
+         \      `.   ' . 
+          `,       `.   \ 
+         ,|,`.        `-.\ 
         '.||  ``-...__..-`
          |  |
          |__|
@@ -46,10 +46,7 @@ def clear():
     os.system("clear")
 
 def is_mode_enabled(key: str) -> bool:
-    for mode in MODES:
-        if mode.key == key:
-            return mode.selected
-    return False
+    return any(mode.key == key and mode.selected for mode in MODES)
 
 def print_banner():
     print(colored(BANNER, "blue"))
@@ -83,6 +80,10 @@ def handle_selection(choice: int, modes: list[Mode]):
     return "continue"
 
 async def show():
+    if not db.check_column_existence("accesspoints", "ssid"):
+        print("[-] 'ssid' column does not exist in the 'accesspoints' table!")
+        sys.exit(1)
+    
     while True:
         clear()
         print_menu(MODES)
@@ -113,33 +114,21 @@ async def show():
                             if not bssid or not ssid:
                                 continue
 
-                            if is_mode_enabled("spoofdetect1"):
-                                # if not str(ssid).lower().__contains__("hidden"): # Old line, replaced by if not x in
-                                if not "hidden" in ssid.lower():
-                                    if await db.is_ssid_already_saved(ssid) and not await db.is_bssid_already_saved(bssid):
-                                        print(colored(f"[*] Possible spoofing detected by method 1: {ssid} ({bssid})"))
+                            if is_mode_enabled("spoofdetect1") and "hidden" not in ssid.lower():
+                                if await db.is_ssid_already_saved(ssid) and not await db.is_bssid_already_saved(bssid):
+                                    print(colored(f"[*] Possible spoofing detected by method 1: {ssid} ({bssid or ''})", "yellow"))
 
-                            if is_mode_enabled("spoofdetect2"):
-                                # if not str(ssid).lower().__contains__("hidden"): # Old line, replaced by if not x in
-                                if not "hidden" in ssid.lower():
-                                    _db_bssid = await db.get_bssid_from_ssid(ssid)
-                                    if bssid != _db_bssid:
-                                        print(colored(f"[*] Possible spoofing detected by method 2: {ssid} ({bssid}:{_db_bssid})"))
+                            if is_mode_enabled("spoofdetect2") and "hidden" not in ssid.lower():
+                                _db_bssid = await db.get_bssid_from_ssid(ssid)
+                                if bssid not in _db_bssid:
+                                    print(colored(f"[*] Possible spoofing detected by method 2: {ssid} ({bssid} | {_db_bssid or 'BSSID N/A'})", "yellow"))
 
                             fp = ""
                             if is_mode_enabled("autofingerprint"):
                                 try:
                                     fp = await Fingerprint.Generate({
-                                        bssid,
-                                        ssid,
-                                        encryption, 
-                                        vendor,
-                                        model,
-                                        modelnumber,
-                                        serialnumber,
-                                        devicename,
-                                        primarydevicetype,
-                                        uuid
+                                        bssid, ssid, encryption, vendor, model, modelnumber,
+                                        serialnumber, devicename, primarydevicetype, uuid
                                     })
                                 except Exception as e:
                                     print(colored(f"[!] Fingerprint error for {bssid}: {e}", "red"))
@@ -149,37 +138,27 @@ async def show():
                                     exists = await db.is_bssid_already_saved(bssid)
                                     if not exists:
                                         print(colored(f"[+] Discovered new access point {ssid} ({bssid})", "green"))
-
-                                        await db.execute_query(
-                                            """
+                                        await db.execute_query("""
                                             INSERT INTO accesspoints 
                                             (bssid, ssid, encryption, vendor, model, modelnumber, serialnumber, 
                                             devicename, primarydevicetype, uuid, fingerprint)
                                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                                            """,
-                                            (
-                                                bssid,
-                                                ssid,
-                                                encryption,
-                                                vendor,
-                                                model,
-                                                modelnumber,
-                                                serialnumber,
-                                                devicename,
-                                                primarydevicetype,
-                                                uuid,
-                                                fp
-                                            )
-                                        )
-                                    # else:
-                                    #     print(colored(f"[-] {bssid} ({ssid}) is already saved.", "red"))
+                                        """, (
+                                            bssid, ssid, encryption, vendor, model, modelnumber, serialnumber,
+                                            devicename, primarydevicetype, uuid, fp
+                                        ))
                                 except Exception as e:
                                     print(colored(f"[!] DB error: {e}", "red"))
 
                     except Exception as e:
                         print(colored(f"[!] Scan loop error: {e}", "red"))
+                    except KeyboardInterrupt:
+                        Capture.set_mode_managed()
+                        print(colored("\nExiting...", "blue"))
+                        return
 
                     await asyncio.sleep(1)
+                
         except ValueError:
             print(colored("Please enter a number.", "red"))
         except Exception as e:
@@ -195,4 +174,8 @@ if __name__ == "__main__":
         print(colored("AeroTrace must be ran with sudo.", "red"))
         sys.exit(1)
 
-    asyncio.run(show())
+    try:
+        asyncio.run(show())
+    except KeyboardInterrupt:
+        print(colored("\nExiting.", "blue"))
+        sys.exit(0)
