@@ -16,6 +16,8 @@ class Mode:
 MODES = [
     Mode("autofingerprint", "Auto Fingerprint"),
     Mode("autosave", "Auto save to database"),
+    Mode("spoofdetect1", "Detect spoofing method 1"),
+    Mode("spoofdetect2", "Detect spoofing method 2"),
 ]
 
 BANNER = r"""
@@ -89,9 +91,12 @@ async def show():
             choice = int(input(colored("\nSelect an option: ", "white")))
             if handle_selection(choice, MODES) == "start":
                 clear()
+                print_banner()
+
                 while True:
                     try:
                         net_results = await Capture.scan()
+                        print(colored(f"[*] Discovered {len(net_results)} access points."))
 
                         for network in net_results:
                             bssid = network.get("bssid")
@@ -105,8 +110,21 @@ async def show():
                             primarydevicetype = network.get("primarydevicetype")
                             uuid = network.get("uuid")
 
-                            if not bssid:
+                            if not bssid or not ssid:
                                 continue
+
+                            if is_mode_enabled("spoofdetect1"):
+                                # if not str(ssid).lower().__contains__("hidden"): # Old line, replaced by if not x in
+                                if not "hidden" in ssid.lower():
+                                    if await db.is_ssid_already_saved(ssid) and not await db.is_bssid_already_saved(bssid):
+                                        print(colored(f"[*] Possible spoofing detected by method 1: {ssid} ({bssid})"))
+
+                            if is_mode_enabled("spoofdetect2"):
+                                # if not str(ssid).lower().__contains__("hidden"): # Old line, replaced by if not x in
+                                if not "hidden" in ssid.lower():
+                                    _db_bssid = await db.get_bssid_from_ssid(ssid)
+                                    if bssid != _db_bssid:
+                                        print(colored(f"[*] Possible spoofing detected by method 2: {ssid} ({bssid}:{_db_bssid})"))
 
                             fp = ""
                             if is_mode_enabled("autofingerprint"):
@@ -130,7 +148,7 @@ async def show():
                                 try:
                                     exists = await db.is_bssid_already_saved(bssid)
                                     if not exists:
-                                        print(colored(f"[*] Saving {ssid} ({bssid}) to database...", "blue"))
+                                        print(colored(f"[+] Discovered new access point {ssid} ({bssid})", "green"))
 
                                         await db.execute_query(
                                             """
@@ -153,8 +171,8 @@ async def show():
                                                 fp
                                             )
                                         )
-                                    else:
-                                        print(colored(f"[-] {bssid} ({ssid}) is already saved.", "red"))
+                                    # else:
+                                    #     print(colored(f"[-] {bssid} ({ssid}) is already saved.", "red"))
                                 except Exception as e:
                                     print(colored(f"[!] DB error: {e}", "red"))
 

@@ -65,6 +65,7 @@ class Capture:
         if await Capture.get_mode() != "managed":
             print(colored("[*] Ensuring card is in managed mode...", "yellow"))
             await Capture.set_mode_monitor()
+        # Commented to stop spamming the output!
         # else:
         #     print(colored("[+] Already in managed mode!", "green"))
         

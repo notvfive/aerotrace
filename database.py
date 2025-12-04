@@ -50,6 +50,41 @@ class DatabaseConnector:
         if result:
             return True
         return False
+    
+    async def is_ssid_already_saved(self, ssid=None):
+        if not ssid:
+            print("[-] No SSID provided to check.")
+            return False
+        
+        result = await self.execute_query("SELECT 1 FROM accesspoints WHERE ssid = ? UNION SELECT 1 FROM stations WHERE ssid = ? LIMIT 1", (ssid, ssid))
+
+        if result:
+            return True
+        return False
+    
+    async def get_bssid_from_ssid(self, ssid=None):
+        if not ssid:
+            print("[-] No SSID provided to check.")
+            return []
+
+        result = await self.execute_query("SELECT bssid FROM accesspoints WHERE ssid = ? UNION SELECT bssid FROM stations WHERE ssid = ?", (ssid, ssid))
+
+        if result:
+            return [row[0] for row in result]
+        
+        return []
+    
+    async def get_ssid_from_bssid(self, bssid=None):
+        if not bssid:
+            print("[-] No BSSID provided to check.")
+            return []
+
+        result = await self.execute_query("SELECT ssid FROM accesspoints WHERE bssid = ? UNION SELECT ssid FROM stations WHERE bssid = ?", (bssid, bssid))
+
+        if result:
+            return [row[0] for row in result]
+        
+        return []
 
     async def close_connection(self):
         if self.db:
