@@ -124,8 +124,6 @@ async def show():
                                     _db_bssid = _db_bssid[0]
 
                                     if bssid != _db_bssid:
-                                        print(type(_db_bssid)) # for debuggin
-                                        print(f"'{_db_bssid}'")#$ also for debugginf
                                         print(colored(f"[*] Possible spoofing detected by method 2: {ssid} ({bssid} | {_db_bssid})", "yellow"))
 
                             fp = ""
