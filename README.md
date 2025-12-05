@@ -1,7 +1,7 @@
 # This tool is not complete or near complete, expect bugs!
 
 ## Info
-Aerotrace is a script made to scan for wireless access points around your proximity and identify, save & detect spoofed access points
+Aerotrace is a script made to scan for wireless access points around your proximity and identify (bssid, ssid & WPS information received), save & detect spoofed access points
 
 ## Setup
 If the database.db doesnt work you can create your own with the steps below
@@ -11,4 +11,5 @@ If the database.db doesnt work you can create your own with the steps below
 ## Features
 * Automatic fingerprints of access points
 * Automatic saving to database
+
 * Two different ways to detect access point spoofing
